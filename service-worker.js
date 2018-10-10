@@ -1,4 +1,6 @@
 var cacheName = "weahterPWA-step-6-1";
+var dataCacheName = "weatherData-v1";
+
 var filesToCache = [
   "/",
   "/index.html",
@@ -36,7 +38,7 @@ self.addEventListener("activate", function(e) {
     caches.keys()
       .then(function(keyList) {
         return Promise.all(keyList.map(function(key) {
-          if (key !== cacheName) {
+          if (key !== cacheName && key !== dataCacheName) {
             console.log("[ServiceWorker] Removing old cache", key);
             return caches.delete(key);
           }
@@ -48,10 +50,35 @@ self.addEventListener("activate", function(e) {
 
 self.addEventListener("fetch", function(e) {
   console.log("[ServiceWorker] Fetch", e.request.url);
-  e.respondWith(
-    caches.match(e.request)
-      .then(function(response) {
-        return response || fetch(e.request);
+  var dataUrl = "https://query.yahooapis.com/v1/public/yql";
+
+
+  if (e.request.url.indexOf(dataUrl) > -1) {
+    // app is requesting data
+
+    // use cache-then-network strategy
+    e.respondWith(
+      caches.open(dataCacheName).then(function(cache) {
+        return fetch(e.request).then(function(response) {
+            var cacheUrl = e.request.url;
+            var cacheResponse = response.clone();
+
+            console.log("cache put...");
+            console.log("url:", cacheUrl);
+            console.log("response:", cacheResponse);
+            cache.put(cacheUrl, cacheResponse);
+            return response;
+        });
       })
-  );
+    );
+  } else {
+    // app is requesting app shell files
+  
+    // use cache-falling-back-to-network strategy
+    e.respondWith(
+      caches.match(e.request).then(function (response) {
+          return response || fetch(e.request);
+      })
+    );
+  }
 });

@@ -9,3 +9,6 @@ Following along with the Google codelabs tutorial, build Your First Progressive 
 ## Notes
 * ...
 
+## Left off at
+* https://codelabs.developers.google.com/codelabs/your-first-pwapp/#6
+* bottom, try it out
